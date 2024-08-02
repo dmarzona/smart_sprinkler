@@ -13,25 +13,8 @@ const int   daylightOffset_sec = 3600;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
-static QueueHandle_t msg_queue;
-
-char buffer[50];
-
 void setup()
 {
-  msg_queue = xQueueCreate(5, 50*sizeof(char));
-
-  snprintf(buffer, 50, "Connecting to %s\n", ssid);
-  SendSerialMessage(buffer);
-  WiFi.begin(ssid, password);
-  
-  while (WiFi.status() != WL_CONNECTED) {
-      vTaskDelay(500 / portTICK_PERIOD_MS);
-  }
-  snprintf(buffer, 50, "CONNECTED!\n");
-  SendSerialMessage(buffer);
-  // Start NTP time sync
-
   xTaskCreatePinnedToCore(
     SerialManagerTask,
     "Serial Task",
@@ -41,6 +24,14 @@ void setup()
     NULL,
     0
   );
+  
+  SendSerialMessage("Connecting to %s\n", ssid);
+  WiFi.begin(ssid, password);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+      vTaskDelay(500 / portTICK_PERIOD_MS);
+  }
+  SendSerialMessage("CONNECTED!\n");
 
   xTaskCreatePinnedToCore(
     updateTime,

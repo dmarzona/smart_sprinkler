@@ -22,11 +22,8 @@ void updateTime(void* parameter)
       current_epoch_time.UpdateEpoch(timeClient.getEpochTime());
       last_saved_epoch_time.UpdateEpoch(current_epoch_time.GetEpoch());
       int error = abs(int((signed long)(current_epoch_time.GetEpoch()) - (signed long)(temp_epoch_time)));
-      snprintf(buffer, 50, "Current time updated, difference %d\n", error);
-      SendSerialMessage(buffer);
-    }
-    
-    snprintf(buffer, 50, "%s\n", current_epoch_time.getDateString());
-    SendSerialMessage(buffer);
+      SendSerialMessage("Current time updated, difference %d\n", error);
+    }    
+    SendSerialMessage("%s\n", current_epoch_time.getDateString());
   }
 }
