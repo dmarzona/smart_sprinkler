@@ -1,69 +1,60 @@
 #include <WiFi.h>
 #include "Wi-Fi.h"
-#include "time.h"
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+#include "FreeRTOS.h"
 
 const char* ssid       = WIFI_NAME;
 const char* password   = WIFI_PASSWORD;
 
 const char* ntpServer = "pool.ntp.org";
-const long  gmtOffset_sec = 3600;
+const long  gmtOffset_sec = 3600*2;
 const int   daylightOffset_sec = 3600;
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
-struct tm current_time;
-struct tm time_next_update;
+static QueueHandle_t msg_queue;
 
-void printTime(struct tm* time_to_print)
-{
-  Serial.println(time_to_print, "%A, %B %d %Y %H:%M:%S");
-}
-
-void getTime(struct tm* timeinfo)
-{
-  if(!getLocalTime(timeinfo)){
-    Serial.println("Failed to obtain time");
-    return;
-  }
-}
-
-void GetTimeFromInternet()
-{
-  //connect to WiFi
-  Serial.printf("Connecting to %s ", ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      Serial.print(".");
-  }
-  Serial.println(" CONNECTED");
-  
-  //init and get the time
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-  // Needed to store properly the time!
-  getTime(&current_time);
-
-  //disconnect WiFi as it's no longer needed
-  WiFi.disconnect(true);
-  WiFi.mode(WIFI_OFF);
-}
+char buffer[50];
 
 void setup()
 {
-  Serial.begin(115200);
-  GetTimeFromInternet();
-  getTime(&time_next_update);
-  time_next_update.tm_min +=1;
+  msg_queue = xQueueCreate(5, 50*sizeof(char));
+
+  snprintf(buffer, 50, "Connecting to %s\n", ssid);
+  SendSerialMessage(buffer);
+  WiFi.begin(ssid, password);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+      vTaskDelay(500 / portTICK_PERIOD_MS);
+  }
+  snprintf(buffer, 50, "CONNECTED!\n");
+  SendSerialMessage(buffer);
+  // Start NTP time sync
+
+  xTaskCreatePinnedToCore(
+    SerialManagerTask,
+    "Serial Task",
+    4096,
+    NULL,
+    1,
+    NULL,
+    0
+  );
+
+  xTaskCreatePinnedToCore(
+    updateTime,
+    "Time",
+    4096,
+    NULL,
+    1,
+    NULL,
+    0
+  );
+  vTaskDelete(NULL);
 }
 
 void loop()
 {
-  getTime(&current_time);
-  if(difftime(mktime(&time_next_update), mktime(&current_time)) < 0)
-  {
-      GetTimeFromInternet();
-      getTime(&time_next_update);
-      printTime(&time_next_update);
-      time_next_update.tm_min +=1;
-  }
-  
-  delay(1000);
+
 }
