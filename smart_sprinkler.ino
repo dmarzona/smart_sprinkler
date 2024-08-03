@@ -2,6 +2,9 @@
 #include "Wi-Fi.h"
 #include <NTPClient.h>
 #include <WiFiUdp.h>
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
 #include "FreeRTOS.h"
 
 const char* ssid       = WIFI_NAME;
@@ -32,6 +35,16 @@ void setup()
       vTaskDelay(500 / portTICK_PERIOD_MS);
   }
   SendSerialMessage("CONNECTED!\n");
+
+  xTaskCreatePinnedToCore(
+    SDCardManager,
+    "SD Manager",
+    4096,
+    NULL,
+    1,
+    NULL,
+    0
+  );
 
   xTaskCreatePinnedToCore(
     updateTime,

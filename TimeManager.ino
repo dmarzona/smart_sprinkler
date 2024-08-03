@@ -24,6 +24,6 @@ void updateTime(void* parameter)
       int error = abs(int((signed long)(current_epoch_time.GetEpoch()) - (signed long)(temp_epoch_time)));
       SendSerialMessage("Current time updated, difference %d\n", error);
     }    
-    SendSerialMessage("%s\n", current_epoch_time.getDateString());
+    log("%s", current_epoch_time.getDateString());
   }
 }
