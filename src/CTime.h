@@ -2,6 +2,10 @@
 #define __CTIME__
 #include <stdio.h>
 
+#define DAY_IN_SECONDS 86400L
+#define HOUR_IN_SECONDS 3600L
+#define MINUTE_IN_SECONDS 60L
+
 enum Months
 {
     January = 0,
@@ -23,6 +27,7 @@ class CTime
     public:
         CTime();
         void UpdateEpoch(time_t new_epoch);
+        void UpdateEpoch(const char* date_string);
         time_t GetEpoch();
         void Increase();
         int GetSeconds();
@@ -33,12 +38,14 @@ class CTime
         int GetYear();
         char* getDateString();
         char* getDateStringForFilename();
+        int operator-(const CTime& other) const;
     
     private:
         void CalculateSeconds();
         void CalculateMinutes();
         void CalculateHours();
         void CalculateDate();
+        void CalculateEpoch();
         int IsLeapYear(int year_to_check);
 
         int epoch;

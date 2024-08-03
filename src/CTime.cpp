@@ -1,18 +1,14 @@
 #include "Arduino.h"
 #include "CTime.h"
 
-static const unsigned long DAY_IN_SECONDS = 86400L;
-static const unsigned long HOUR_IN_SECONDS = 3600L;
-static const unsigned long MINUTE_IN_SECONDS = 60L;
-
 CTime::CTime():
       epoch(0)
     , seconds(0)
     , minutes(0)
     , hours(0)
-    , day(0)
-    , month(0)
-    , year(0)
+    , day(1)
+    , month(1)
+    , year(1970)
 {
 
 }
@@ -24,6 +20,17 @@ void CTime::UpdateEpoch(time_t new_epoch)
     CalculateMinutes();
     CalculateHours();
     CalculateDate();
+}
+
+void CTime::UpdateEpoch(const char* date_string)
+{
+    sscanf(date_string, "%d-%d-%d %d:%d:%d",
+            &year, &month, &day,
+            &hours, &minutes, &seconds);
+    if(year >= 1970 && month !=0 && day != 0)
+    {
+        CalculateEpoch();
+    }
 }
 
 time_t CTime::GetEpoch()
@@ -137,4 +144,39 @@ void CTime::CalculateDate()
     }
     month += 1;     // Months starts at one 
     day = days + 1; // Day of month starts at 1
+}
+
+void CTime::CalculateEpoch()
+{
+    int daysPerMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    int start_year = 1970;
+    
+    // Add seconds for full years since 1970
+    for (int y = start_year; y < year; y++)
+    {
+        epoch += IsLeapYear(y) ? 366 * DAY_IN_SECONDS : 365 * DAY_IN_SECONDS;
+    }
+    
+    // Add seconds for full months of the current year
+    for (int m = 0; m < month-1; m++)
+    {
+        epoch += daysPerMonth[m] * DAY_IN_SECONDS;
+        if (m == February && IsLeapYear(year))
+        {
+            epoch += DAY_IN_SECONDS;
+        }
+    }
+    
+    // Add seconds for full days of the current month
+    epoch += (day - 1) * DAY_IN_SECONDS;
+    
+    // Add seconds for the current day
+    epoch += hours * HOUR_IN_SECONDS;
+    epoch += minutes * MINUTE_IN_SECONDS;
+    epoch += seconds;
+}
+
+int CTime::operator-(const CTime& other) const
+{
+    return abs(this->epoch - other.epoch);
 }
