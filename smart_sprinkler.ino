@@ -55,6 +55,16 @@ void setup()
     NULL,
     0
   );
+
+  xTaskCreatePinnedToCore(
+    mainApplication,
+    "Application",
+    4096,
+    NULL,
+    1,
+    NULL,
+    0
+  );
   vTaskDelete(NULL);
 }
 
