@@ -1,3 +1,5 @@
+#ifndef __CTIME__
+#define __CTIME__
 #include <stdio.h>
 
 enum Months
@@ -30,6 +32,7 @@ class CTime
         int GetMonth();
         int GetYear();
         char* getDateString();
+        char* getDateStringForFilename();
     
     private:
         void CalculateSeconds();
@@ -46,4 +49,6 @@ class CTime
         int month;
         int year;
         char date[20];
+        char file_name_string[11];
 };
+#endif

@@ -77,6 +77,11 @@ char* CTime::getDateString()
     return date;
 }
 
+char* CTime::getDateStringForFilename()
+{
+    snprintf(this->file_name_string, 11, "%04d_%02d_%02d", year, month, day);
+    return file_name_string;
+}
 
 void CTime::CalculateSeconds()
 {
