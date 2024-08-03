@@ -25,7 +25,7 @@ void SerialManagerTask(void* parameter)
         if(xQueueReceive(msg_queue, (void *)&rcv_msg, 0) == pdTRUE)
         {
             Serial.print(rcv_msg);
-            memset(rcv_msg, 0, 50);
+            memset(rcv_msg, 0, BUFFER_SIZE);
         }
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
