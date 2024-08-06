@@ -16,8 +16,14 @@ const int   daylightOffset_sec = 3600;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
+const int pumpPin = 16;
+const int buttonPin = 1;
+
 void setup()
 {
+  pinMode(pumpPin, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLDOWN);
+
   xTaskCreatePinnedToCore(
     SerialManagerTask,
     "Serial Task",
