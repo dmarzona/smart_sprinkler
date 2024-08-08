@@ -55,16 +55,22 @@ void handleSettingsSubmit()
     {
         int temp_act_time = 0;
         temp_act_time = server.arg("activationTime").toInt();
-        log("Activation time updated: %d --> %d", variables.GetActivationTime(), temp_act_time);
-        variables.UpdateActivationTime(temp_act_time);
+        if (temp_act_time >= 0)
+        {
+            log("Activation time updated: %d --> %d", variables.GetActivationTime(), temp_act_time);
+            variables.UpdateActivationTime(temp_act_time);
+        }
     }
     
     if (server.hasArg("pumpPower"))
     {
         int temp_pump_power = 0;
         temp_pump_power = server.arg("pumpPower").toInt();
-        log("Pump power updated: %d --> %d", variables.GetPumpPower(), temp_pump_power);
-        variables.UpdatePumpPower(temp_pump_power);
+        if (temp_pump_power <=100 && temp_pump_power >=0)
+        {
+            log("Pump power updated: %d --> %d", variables.GetPumpPower(), temp_pump_power);
+            variables.UpdatePumpPower(temp_pump_power);
+        }
     }
 
     // Redirect to about page after updating variables
