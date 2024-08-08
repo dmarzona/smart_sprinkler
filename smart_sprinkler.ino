@@ -42,6 +42,7 @@ void setup()
       vTaskDelay(500 / portTICK_PERIOD_MS);
   }
   SendSerialMessage("CONNECTED!\n");
+  SendSerialMessage("IP: %s\n", WiFi.localIP().toString());
 
   xTaskCreatePinnedToCore(
     SDCardManager,
@@ -66,6 +67,16 @@ void setup()
   xTaskCreatePinnedToCore(
     mainApplication,
     "Application",
+    4096,
+    NULL,
+    1,
+    NULL,
+    0
+  );
+
+  xTaskCreatePinnedToCore(
+    webSiteTask,
+    "WebSite",
     4096,
     NULL,
     1,

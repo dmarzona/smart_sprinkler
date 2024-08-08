@@ -1,19 +1,14 @@
 #include <Adafruit_BMP280.h>
 #include "src/CTime.h"
+#include "src/WebsiteVariables.h"
 
 Adafruit_BMP280 bmp;
 extern CTime current_epoch_time;
+extern WebsiteVariables variables;
 CTime application_time;
 CTime first_activation;
 CTime second_activation;
 CTime pump_activation_time;
-
-static int pump_power = 128;
-
-void setPumpPower(int new_power)
-{
-    pump_power = new_power;
-}
 
 float getCurrentSensor()
 {
@@ -46,6 +41,13 @@ void mainApplication(void* parameter)
 
     application_time = current_epoch_time;
 
+    if (bmp.takeForcedMeasurement())
+    {
+        variables.UpdateTemperature(bmp.readTemperature());
+        variables.UpdatePressure(bmp.readPressure());
+        variables.UpdateCurrentSense(getCurrentSensor());
+    }
+
     while(true)
     {
         button_state = digitalRead(buttonPin);
@@ -55,10 +57,13 @@ void mainApplication(void* parameter)
         {
             if (bmp.takeForcedMeasurement())
             {
-                log("Temperature: %.2f *C, Pressure: %.2f Pa", bmp.readTemperature(), bmp.readPressure());
+                variables.UpdateTemperature(bmp.readTemperature());
+                variables.UpdatePressure(bmp.readPressure());
+                log("Temperature: %.2f *C, Pressure: %.2f Pa", variables.GetTemperature(), variables.GetPressure());
             }
 
-            log("Voltage at current sensor interface: %.2f V", getCurrentSensor());
+            variables.UpdateCurrentSense(getCurrentSensor());
+            log("Voltage at current sensor interface: %.2f V", variables.GetCurrentSense());
             // store time
             application_time = current_epoch_time;
         }
@@ -76,11 +81,11 @@ void mainApplication(void* parameter)
         {
             pump_start = true;
             pump_activation_time = current_epoch_time;
-            analogWrite(pumpPin, pump_power);
+            analogWrite(pumpPin, variables.GetPumpPowerRaw());
             log("Pump active");
         }
 
-        if (((current_epoch_time - pump_activation_time) >= 1*MINUTE_IN_SECONDS) && pump_start)
+        if (((current_epoch_time - pump_activation_time) >= variables.GetActivationTime()) && pump_start)
         {
             pump_start = false;
             analogWrite(pumpPin, 0);
@@ -94,7 +99,8 @@ void mainApplication(void* parameter)
 
         if(pump_start)
         {
-            log("Voltage at current sensor interface: %.2f V", getCurrentSensor());
+            variables.UpdateCurrentSense(getCurrentSensor());
+            log("Voltage at current sensor interface: %.2f V", variables.GetCurrentSense());
         }
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);

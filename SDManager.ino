@@ -16,6 +16,7 @@ dentro salvo l'html per fare il sito. Come fare, questo vedremo
 di log che in base ai parametri, sceglie se mandare su SD o su Seriale
 */
 #include "src/CTime.h"
+#include "src/WebsiteVariables.h"
 
 #define BUFFER_SIZE 100
 
@@ -26,6 +27,7 @@ static const int cs   = 10;
 
 static QueueHandle_t log_msg_queue;
 extern CTime current_epoch_time;
+extern WebsiteVariables variables;
 
 bool createDir(fs::FS &fs, const char *path)
 {
@@ -107,6 +109,7 @@ void SDCardManager(void* parameter)
             char file_path[BUFFER_SIZE];
             snprintf(tmp_string, BUFFER_SIZE, "[%s]: %s\n", current_epoch_time.getDateString(), rcv_msg);
             snprintf(file_path, BUFFER_SIZE, "/logs/%s.log", current_epoch_time.getDateStringForFilename());
+            variables.UpdateString(tmp_string);
             appendFile(SD, file_path, tmp_string);
             memset(rcv_msg, 0, BUFFER_SIZE);
         }
