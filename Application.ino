@@ -8,6 +8,20 @@ CTime first_activation;
 CTime second_activation;
 CTime pump_activation_time;
 
+static int pump_power = 128;
+
+void setPumpPower(int new_power)
+{
+    pump_power = new_power;
+}
+
+float getCurrentSensor()
+{
+    int current_sensor_read = analogRead(currentSensorPin);
+    float voltage_on_current_sensor = 3.3*(float)(current_sensor_read)/4096.0;
+    return voltage_on_current_sensor;
+}
+
 void mainApplication(void* parameter)
 {
     int button_state = false;
@@ -43,6 +57,8 @@ void mainApplication(void* parameter)
             {
                 log("Temperature: %.2f *C, Pressure: %.2f Pa", bmp.readTemperature(), bmp.readPressure());
             }
+
+            log("Voltage at current sensor interface: %.2f V", getCurrentSensor());
             // store time
             application_time = current_epoch_time;
         }
@@ -60,7 +76,7 @@ void mainApplication(void* parameter)
         {
             pump_start = true;
             pump_activation_time = current_epoch_time;
-            analogWrite(pumpPin, 128);
+            analogWrite(pumpPin, pump_power);
             log("Pump active");
         }
 
@@ -74,6 +90,11 @@ void mainApplication(void* parameter)
         if(button_state == HIGH)
         {
             SendSerialMessage("Pump activated by external button");
+        }
+
+        if(pump_start)
+        {
+            log("Voltage at current sensor interface: %.2f V", getCurrentSensor());
         }
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);

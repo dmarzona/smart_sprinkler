@@ -18,6 +18,7 @@ NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
 const int pumpPin = 16;
 const int buttonPin = 1;
+const int currentSensorPin = 5;
 
 void setup()
 {
