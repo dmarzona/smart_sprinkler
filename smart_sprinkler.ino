@@ -20,6 +20,20 @@ const int pumpPin = 16;
 const int buttonPin = 1;
 const int currentSensorPin = 5;
 
+void checkWifiStatus(void* parameter)
+{
+  while(true)
+  {
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      log("WiFi lost, reconnecting...");
+      WiFi.disconnect();
+      WiFi.reconnect();
+    }
+    vTaskDelay(60000 / portTICK_PERIOD_MS);
+  }
+}
+
 void setup()
 {
   pinMode(pumpPin, OUTPUT);
@@ -83,6 +97,17 @@ void setup()
     NULL,
     0
   );
+
+  xTaskCreatePinnedToCore(
+    checkWifiStatus,
+    "WiFi check",
+    2048,
+    NULL,
+    1,
+    NULL,
+    0
+  );
+
   vTaskDelete(NULL);
 }
 

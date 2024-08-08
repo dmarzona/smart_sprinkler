@@ -15,7 +15,7 @@ void updateTime(void* parameter)
   {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     current_epoch_time.Increase();
-    if ((current_epoch_time - last_saved_epoch_time) >= DAY_IN_SECONDS)
+    if ((current_epoch_time - last_saved_epoch_time) >= DAY_IN_SECONDS && WiFi.status() == WL_CONNECTED)
     {
       timeClient.update();
       time_t temp_epoch_time = current_epoch_time.GetEpoch();
