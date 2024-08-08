@@ -5,7 +5,7 @@
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
-#include "FreeRTOS.h"
+#include "freertos/FreeRTOS.h"
 
 const char* ssid       = WIFI_NAME;
 const char* password   = WIFI_PASSWORD;
