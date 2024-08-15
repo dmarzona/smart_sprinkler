@@ -1,5 +1,4 @@
 #include <WiFi.h>
-#include "Wi-Fi.h"
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include "FS.h"
@@ -20,6 +19,8 @@ const int pumpPin = 16;
 const int buttonPin = 1;
 const int currentSensorPin = 5;
 
+SemaphoreHandle_t wait_for_connection_semaphore;
+
 void checkWifiStatus(void* parameter)
 {
   while(true)
@@ -39,6 +40,12 @@ void setup()
   pinMode(pumpPin, OUTPUT);
   pinMode(buttonPin, INPUT_PULLDOWN);
 
+  wait_for_connection_semaphore = xSemaphoreCreateBinary();
+  if(NULL != wait_for_connection_semaphore)
+  {
+    xSemaphoreGive(wait_for_connection_semaphore);
+  }
+
   xTaskCreatePinnedToCore(
     SerialManagerTask,
     "Serial Task",
@@ -48,15 +55,24 @@ void setup()
     NULL,
     0
   );
-  
-  SendSerialMessage("Connecting to %s\n", ssid);
-  WiFi.begin(ssid, password);
-  
-  while (WiFi.status() != WL_CONNECTED) {
-      vTaskDelay(500 / portTICK_PERIOD_MS);
+
+  if(xSemaphoreTake(wait_for_connection_semaphore, (TickType_t)10) == pdTRUE)
+  {
+    xTaskCreatePinnedToCore(
+      PreStartApplication,
+      "Pre-start",
+      4096,
+      NULL,
+      1,
+      NULL,
+      0
+    );
   }
-  SendSerialMessage("CONNECTED!\n");
-  SendSerialMessage("IP: %s\n", WiFi.localIP().toString());
+
+  // Wait until connection to local network is done
+  while (xSemaphoreTake(wait_for_connection_semaphore, (TickType_t)10) == pdFALSE)
+  {
+  }
 
   xTaskCreatePinnedToCore(
     SDCardManager,
