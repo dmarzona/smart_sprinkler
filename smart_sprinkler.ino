@@ -5,9 +5,7 @@
 #include "SD.h"
 #include "SPI.h"
 #include "freertos/FreeRTOS.h"
-
-const char* ssid       = WIFI_NAME;
-const char* password   = WIFI_PASSWORD;
+#include "src/CFlash.h"
 
 const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = 3600*2;
@@ -20,6 +18,8 @@ const int buttonPin = 1;
 const int currentSensorPin = 5;
 
 SemaphoreHandle_t wait_for_connection_semaphore;
+
+CFlash application_information;
 
 void checkWifiStatus(void* parameter)
 {
@@ -55,7 +55,7 @@ void setup()
     NULL,
     0
   );
-
+  
   if(xSemaphoreTake(wait_for_connection_semaphore, (TickType_t)10) == pdTRUE)
   {
     xTaskCreatePinnedToCore(
