@@ -16,6 +16,7 @@ typedef struct
     char ssid[WIFI_INFO_LENGTH];
     char password[WIFI_INFO_LENGTH];
     time_t sprinkler_active_time[10];
+    uint8_t stored_active_times;
     uint8_t pump_power;
     uint16_t activation_time;
 } __attribute__((packed, aligned(1))) FlashInfo;
@@ -34,6 +35,15 @@ class CFlash
         void SetWiFiSSID(const char* ssid);
         void SetWiFiPassword(const char* password);
         bool IsSSIDSet();
+        uint8_t GetPumpPower();
+        uint8_t GetPumpPowerRaw();
+        uint16_t GetActivationTime();
+        uint8_t GetStoredActiveTimes();
+        time_t GetActiveTime(uint8_t i);
+        void SetPumpPower(uint8_t new_pump_power);
+        void SetActivationTime(uint16_t new_activation_time);
+        void SetActiveTime(time_t active_time);
+        void ResetStoredActiveTimes();
     
     private:
         FlashInfo info;
