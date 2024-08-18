@@ -206,8 +206,8 @@ const char* settings = R"delim(
 
         <!-- Dynamic Entries Column -->
         <div class="column">
-            <h2>Additional Settings</h2>
-            <form action="/additional_settings" method="POST" id="dynamicForm">
+            <h2>Irrigation start times</h2>
+            <form action="/irrigation_start_times" method="POST" id="dynamicForm">
                 <div id="entries">
                     {{additionalEntries}}
                 </div>

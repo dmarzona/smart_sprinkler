@@ -15,7 +15,7 @@ void webSiteTask(void* parameter)
     server.on("/", HTTP_POST, handleActivatePump);
     server.on("/settings", handleSettings);
     server.on("/pump_settings", HTTP_POST, handlePumpSettings);
-    server.on("/additional_settings", HTTP_POST, handleAdditionalSettings);
+    server.on("/irrigation_start_times", HTTP_POST, handleIrrigationStartTimes);
     server.onNotFound(handleNotFound);
 
     // Start the server
@@ -118,7 +118,7 @@ void handlePumpSettings()
     server.send(303); // HTTP 303 See Other
 }
 
-void handleAdditionalSettings()
+void handleIrrigationStartTimes()
 {
     application_information.ResetStoredActiveTimes();
     for (int i = 0; i < 10; i++)
