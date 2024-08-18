@@ -24,9 +24,17 @@ void CTime::UpdateEpoch(time_t new_epoch)
 
 void CTime::UpdateEpoch(const char* date_string)
 {
-    sscanf(date_string, "%d-%d-%d %d:%d:%d",
+    if(sscanf(date_string, "%d-%d-%d %d:%d:%d",
             &year, &month, &day,
+            &hours, &minutes, &seconds) != 6)
+    {
+        sscanf(date_string, "%d:%d:%d",
             &hours, &minutes, &seconds);
+        year = 1970;
+        month = 1;
+        day = 1;
+    }
+
     if(year >= 1970 && month !=0 && day != 0)
     {
         CalculateEpoch();
@@ -82,6 +90,13 @@ char* CTime::getDateString()
     snprintf(this->date, 20, "%04d-%02d-%02d %02d:%02d:%02d",
              year, month, day, hours, minutes, seconds);
     return date;
+}
+
+char* CTime::getTimeString()
+{
+    snprintf(this->hour, 9, "%02d:%02d:%02d",
+             hours, minutes, seconds);
+    return hour;
 }
 
 char* CTime::getDateStringForFilename()

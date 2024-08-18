@@ -5,6 +5,7 @@
 #define DAY_IN_SECONDS 86400L
 #define HOUR_IN_SECONDS 3600L
 #define MINUTE_IN_SECONDS 60L
+#define NOT_A_TIME 0xFFFFFFFF
 
 enum Months
 {
@@ -37,6 +38,7 @@ class CTime
         int GetMonth();
         int GetYear();
         char* getDateString();
+        char* getTimeString();
         char* getDateStringForFilename();
         int operator-(const CTime& other) const;
     
@@ -56,6 +58,7 @@ class CTime
         int month;
         int year;
         char date[20];
+        char hour[9];
         char file_name_string[11];
 };
 #endif
