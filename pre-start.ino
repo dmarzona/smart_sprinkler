@@ -22,6 +22,16 @@ void PreStartApplication(void* parameter)
 
   WiFi.mode(WIFI_AP_STA);
 
+  // Initialize mDNS
+  if (!MDNS.begin("smart-sprinkler"))
+  {
+    SendSerialMessage("Error setting up MDNS responder!\n");
+  }
+  else
+  {
+    SendSerialMessage("mDNS responder started\n");
+  }
+
   // Init communication with the external flash
   application_information.begin();
   
@@ -54,16 +64,6 @@ void PreStartApplication(void* parameter)
     WiFi.mode(WIFI_AP_STA);
     WiFi.softAP(ssidAP, passwordAP);
     SendSerialMessage("AP Started. Connect to %s with password: %s\n", ssidAP, passwordAP);
-
-    // Initialize mDNS
-    if (!MDNS.begin("smart-sprinkler"))
-    {
-      SendSerialMessage("Error setting up MDNS responder!\n");
-    }
-    else
-    {
-      SendSerialMessage("mDNS responder started\n");
-    }
 
     IPAddress IP = WiFi.softAPIP();
     SendSerialMessage("AP IP address: ");
@@ -154,7 +154,6 @@ void handleConnectPreStart() {
     connection_server.send(200, "text/plain", "Connected to " + ssid);
     application_information.SetWiFiSSID(ssid.c_str());
     application_information.SetWiFiPassword(password.c_str());
-    SendSerialMessage("SSID: %s, PW:%s\n", application_information.GetWifiSSID(), application_information.GetWifiPassword());
     connection_established = true;
   }
   else
