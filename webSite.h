@@ -60,6 +60,19 @@ const char* home = R"(
         .link:hover {
             text-decoration: underline;
         }
+        button {
+            padding: 10px 20px; /* Adjust padding for a larger button */
+            font-size: 18px; /* Increase font size */
+            background-color: #007bff; /* Button background color */
+            color: white; /* Button text color */
+            border: none; /* Remove border */
+            border-radius: 5px; /* Rounded corners */
+            cursor: pointer; /* Change cursor on hover */
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #0056b3; /* Darker background on hover */
+        }
     </style>
 </head>
 <body>
@@ -86,13 +99,16 @@ const char* home = R"(
         <div class="string">{{log_line_4}}</div>
         <div class="string">{{log_line_5}}</div>
     </div>
-    <a class="link" href="/settings.html">Settings</a>
+    <form action="/" method="POST">
+        <button type="submit">Activate pump</button>
+    </form>
+    <a class="link" href="/settings">Settings</a>
 </body>
 </html>
 
 )";
 
-const char* settings = R"(
+const char* settings = R"delim(
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,61 +119,147 @@ const char* settings = R"(
         body {
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Align items to the top center */
-        }
-        .container {
-            margin-top: 50px; /* Add some margin from the top */
-            text-align: center;
+            margin: 20px;
+            text-align: center; /* Center align the text */
         }
         h1 {
             color: #333;
+            margin-bottom: 20px;
         }
-        a {
+        .home-link {
+            display: block;
+            margin-top: 20px;
+            font-size: 18px;
             text-decoration: none;
             color: #007bff;
         }
-        a:hover {
+        .home-link:hover {
+            color: #0056b3;
             text-decoration: underline;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .column {
+            flex: 1;
+            padding: 20px;
+            background-color: #fff;
+            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: left; /* Align the content inside columns to the left */
         }
         input[type="text"] {
             padding: 5px;
             margin-bottom: 10px;
-            width: calc(100% - 20px); /* Make input boxes full width minus padding */
-            max-width: 300px;
+            width: calc(100% - 70px); /* Adjust width to fit the remove button */
             box-sizing: border-box;
         }
         button {
-            padding: 10px 20px; /* Adjust padding for a larger button */
-            font-size: 18px; /* Increase font size */
-            width: 100px; /* Optional: set a width for uniformity */
-            height: 50px; /* Optional: set a height */
-            background-color: #007bff; /* Button background color */
-            color: white; /* Button text color */
-            border: none; /* Remove border */
-            border-radius: 5px; /* Rounded corners */
-            cursor: pointer; /* Change cursor on hover */
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
         }
         button:hover {
-            background-color: #0056b3; /* Darker background on hover */
+            background-color: #0056b3;
+        }
+        .remove-btn {
+            padding: 5px;
+            font-size: 14px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .remove-btn:hover {
+            background-color: #c82333;
+        }
+        .entry-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
+    <h1>Settings</h1>
     <div class="container">
-        <h1>Settings</h1>
-        <form action="/settings.html" method="POST">
-            <label for="activationTime">Activation time [s]:</label>
-            <input type="text" id="activationTime" name="activationTime" value="0"><br>
-            <label for="pumpPower">Pump power [%]:</label>
-            <input type="text" id="pumpPower" name="pumpPower" value="0"><br>
-            <button type="submit">Submit</button>
-        </form>
-        <a class="link" href="/">Home</a>
+        <!-- Pump Settings Column -->
+        <div class="column">
+            <h2>Pump Settings</h2>
+            <form action="/pump_settings" method="POST">
+                <label for="activation_time">Pump activation time [s]:</label>
+                <input type="text" id="activation_time" name="activation_time" value="{{activation_time}}"><br>
+                <label for="pump_power">Pump power [%]:</label>
+                <input type="text" id="pump_power" name="pump_power" value="{{pump_power}}"><br>
+                <button type="submit">Update Pump Settings</button>
+            </form>
+        </div>
+
+        <!-- Dynamic Entries Column -->
+        <div class="column">
+            <h2>Additional Settings</h2>
+            <form action="/additional_settings" method="POST" id="dynamicForm">
+                <div id="entries">
+                    {{additionalEntries}}
+                </div>
+                <button type="button" onclick="addEntry()">Add Entry</button>
+                <button type="submit" onclick="return validateForm()">Submit All Entries</button>
+            </form>
+        </div>
     </div>
+    <!-- Centered Home Link -->
+    <a href="/" class="home-link">Home</a>
+    <script>
+        let entryCount = {{entryCount}};
+
+        // Function to add a new entry
+        function addEntry() {
+            if (entryCount < 10) {
+                entryCount++;
+                const entryDiv = document.getElementById('entries');
+                const newEntry = document.createElement('div');
+                newEntry.className = 'entry-group';
+                newEntry.innerHTML = `
+                    <input type="text" id="entry${entryCount}" name="entry${entryCount}" value="00:00:00" placeholder="HH:MM:SS">
+                    <button type="button" class="remove-btn" onclick="removeEntry(this)">Remove</button>
+                `;
+                entryDiv.appendChild(newEntry);
+            } else {
+                alert('Maximum of 10 entries reached');
+            }
+        }
+
+        // Function to remove a specific entry
+        function removeEntry(button) {
+            const entryGroup = button.parentElement;
+            entryGroup.remove();
+            entryCount--;
+        }
+
+        // Function to validate the time format HH:MM:SS
+        function validateForm() {
+            const entries = document.querySelectorAll('#entries input[type="text"]');
+            const timePattern = /^([0-1]\d|2[0-3]):([0-5]\d):([0-5]\d)$/; // Regex for HH:MM:SS
+
+            for (let i = 0; i < entries.length; i++) {
+                if (!timePattern.test(entries[i].value)) {
+                    alert('Invalid time format in entry ' + (i + 1) + ', is '+ entries[i].value +   '. Please use HH:MM:SS.');
+                    return false; // Prevent form submission
+                }
+            }
+
+            return true; // Allow form submission if all entries are valid
+        }
+    </script>
 </body>
 </html>
-)";
+)delim";
