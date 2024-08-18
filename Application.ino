@@ -5,10 +5,11 @@
 Adafruit_BMP280 bmp;
 extern CTime current_epoch_time;
 extern WebsiteVariables variables;
+extern CFlash application_information;
 CTime application_time;
-CTime first_activation;
-CTime second_activation;
 CTime pump_activation_time;
+
+bool pump_override = false;
 
 float getCurrentSensor()
 {
@@ -19,11 +20,7 @@ float getCurrentSensor()
 
 void mainApplication(void* parameter)
 {
-    int button_state = false;
     static int pump_start = false;
-    
-    first_activation.UpdateEpoch("1970-01-01 06:00:00");
-    second_activation.UpdateEpoch("1970-01-01 21:00:00");
 
     if (!bmp.begin(0x76))
     {
@@ -49,9 +46,7 @@ void mainApplication(void* parameter)
     }
 
     while(true)
-    {
-        button_state = digitalRead(buttonPin);
-        
+    {   
         // log only every five minutes
         if ((current_epoch_time - application_time) >= 5*MINUTE_IN_SECONDS)
         {
@@ -68,33 +63,32 @@ void mainApplication(void* parameter)
             application_time = current_epoch_time;
         }
 
-        if((first_activation.GetHours()   == current_epoch_time.GetHours()   &&
-            first_activation.GetMinutes() == current_epoch_time.GetMinutes() &&
-            first_activation.GetSeconds() == current_epoch_time.GetSeconds())
-            ||
-           (second_activation.GetHours()   == current_epoch_time.GetHours()   &&
-            second_activation.GetMinutes() == current_epoch_time.GetMinutes() &&
-            second_activation.GetSeconds() == current_epoch_time.GetSeconds())
-            ||
-            button_state == HIGH
-          )
+        for(uint8_t i = 0; i < application_information.GetStoredActiveTimes(); i++)
         {
-            pump_start = true;
-            pump_activation_time = current_epoch_time;
-            analogWrite(pumpPin, variables.GetPumpPowerRaw());
-            log("Pump active");
+            CTime temp_time;
+
+            temp_time.UpdateEpoch(application_information.GetActiveTime(i));
+            
+            if( temp_time.GetHours()   == current_epoch_time.GetHours()   &&
+                temp_time.GetMinutes() == current_epoch_time.GetMinutes() &&
+                temp_time.GetSeconds() == current_epoch_time.GetSeconds()
+                ||
+                pump_override)
+            {
+                pump_start = true;
+                pump_override = false;
+                pump_activation_time = current_epoch_time;
+                analogWrite(pumpPin, application_information.GetPumpPowerRaw());
+                log("Pump active");
+                break;
+            }
         }
 
-        if (((current_epoch_time - pump_activation_time) >= variables.GetActivationTime()) && pump_start)
+        if (((current_epoch_time - pump_activation_time) >= application_information.GetActivationTime()) && pump_start)
         {
             pump_start = false;
             analogWrite(pumpPin, 0);
             log("Pump turn-off");
-        }
-
-        if(button_state == HIGH)
-        {
-            SendSerialMessage("Pump activated by external button");
         }
 
         if(pump_start)
