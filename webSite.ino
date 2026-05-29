@@ -97,7 +97,7 @@ void handlePumpSettings()
         temp_act_time = server.arg("activation_time").toInt();
         if (temp_act_time >= 0)
         {
-            log("Activation time updated: %d --> %d", application_information.GetActivationTime(), temp_act_time);
+            SendSerialMessage("Activation time updated: %d --> %d\n", application_information.GetActivationTime(), temp_act_time);
             application_information.SetActivationTime(temp_act_time);
         }
     }
@@ -108,7 +108,7 @@ void handlePumpSettings()
         temp_pump_power = server.arg("pump_power").toInt();
         if (temp_pump_power <=100 && temp_pump_power >=0)
         {
-            log("Pump power updated: %d --> %d", application_information.GetPumpPower(), temp_pump_power);
+            SendSerialMessage("Pump power updated: %d --> %d\n", application_information.GetPumpPower(), temp_pump_power);
             application_information.SetPumpPower(temp_pump_power);
         }
     }
