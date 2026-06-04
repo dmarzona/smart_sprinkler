@@ -48,7 +48,7 @@ void mainApplication(void* parameter)
     application_time = current_epoch_time;
 
     variables.UpdateTemperature(sht40.readTemperatureC());
-    variables.UpdatePressure(sht40.readHumidityRH());
+    variables.UpdateHumidity(sht40.readHumidityRH());
     variables.UpdateCurrentSense(pump.getCurrent());
 
     while(true)
@@ -58,8 +58,8 @@ void mainApplication(void* parameter)
         {
 
             variables.UpdateTemperature(sht40.readTemperatureC());
-            variables.UpdatePressure(sht40.readHumidityRH());
-            SendSerialMessage("Temperature: %.2f *C, RH: %.2f %\n", variables.GetTemperature(), variables.GetPressure());
+            variables.UpdateHumidity(sht40.readHumidityRH());
+            SendSerialMessage("Temperature: %.2f *C, RH: %.2f %\n", variables.GetTemperature(), variables.GetHumidity());
 
             variables.UpdateCurrentSense(pump.getCurrent());
             SendSerialMessage("Voltage at current sensor interface: %.2f V\n", variables.GetCurrentSense());
@@ -67,11 +67,13 @@ void mainApplication(void* parameter)
             application_time = current_epoch_time;
         }
 
-        for(uint8_t i = 0; i < application_information.GetStoredActiveTimes(); i++)
+        for (uint8_t j = 0; j < PUMP_MAX_NUMBER; j++)
+        {
+        for(uint8_t i = 0; i < application_information.GetStoredActiveTimes(j); i++)
         {
             CTime temp_time;
 
-            temp_time.UpdateEpoch(application_information.GetActiveTime(i));
+            temp_time.UpdateEpoch(application_information.GetActiveTime(j,i));
             
             if( temp_time.GetHours()   == current_epoch_time.GetHours()   &&
                 temp_time.GetMinutes() == current_epoch_time.GetMinutes() &&
@@ -82,18 +84,30 @@ void mainApplication(void* parameter)
                 pump_start = true;
                 pump_override = false;
                 pump_activation_time = current_epoch_time;
-                pump.setPwmDirection1(application_information.GetPumpPowerRaw());
-                pump.activatePumpDirection1(true);
+                if(j==0)
+                {
+                    pump.setPwmDirection1(application_information.GetPumpPowerRaw(j));
+                    pump.activatePumpDirection1(true);
+                }
+                else
+                {
+                    pump.setPwmDirection2(application_information.GetPumpPowerRaw(j));
+                    pump.activatePumpDirection2(true);
+                }
                 SendSerialMessage("Pump active\n");
                 break;
             }
         }
+        }
 
-        if (((current_epoch_time - pump_activation_time) >= application_information.GetActivationTime()) && pump_start)
+        for (uint8_t j = 0; j < PUMP_MAX_NUMBER; j++)
+        {
+        if (((current_epoch_time - pump_activation_time) >= application_information.GetActivationTime(j)) && pump_start)
         {
             pump_start = false;
             pump.activatePumpDirection1(false);
             SendSerialMessage("Pump turn-off\n");
+        }
         }
 
         if(pump_start)
