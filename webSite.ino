@@ -34,13 +34,8 @@ void handleRoot()
     String temp_home(home);
     // Replace placeholders with actual variable values
     temp_home.replace("{{temperature}}", String(variables.GetTemperature()));
-    temp_home.replace("{{pressure}}", String(variables.GetPressure()));
+    temp_home.replace("{{pressure}}", String(variables.GetHumidity()));
     temp_home.replace("{{current_sense}}", String(variables.GetCurrentSense()));
-    temp_home.replace("{{log_line_1}}", String(variables.getString(0)));
-    temp_home.replace("{{log_line_2}}", String(variables.getString(1)));
-    temp_home.replace("{{log_line_3}}", String(variables.getString(2)));
-    temp_home.replace("{{log_line_4}}", String(variables.getString(3)));
-    temp_home.replace("{{log_line_5}}", String(variables.getString(4)));
     server.send(200, "text/html", temp_home);
 }
 
@@ -48,41 +43,54 @@ void handleSettings()
 {
     // Read the contents of the file into a string and close it
     String temp_settings(settings);
-
-    // Replace variables in the HTML template
-    temp_settings.replace("{{pump_power}}", String(application_information.GetPumpPower()));
-    temp_settings.replace("{{activation_time}}", String(application_information.GetActivationTime()));
-
-    String additionalEntries = "";
-    uint8_t entryCount = 0;
-
-    uint8_t active_time_stored = application_information.GetStoredActiveTimes();
-    if(active_time_stored > 0)
+    for(uint8_t j = 0; j < PUMP_MAX_NUMBER; j++)
     {
-        for (int i = 0; i < active_time_stored; i++)
+        // Place holders
+        String additional_entries_string = "";
+        String entries_string = "";
+        String pump_power_string = "";
+        String activation_time_string = "";
+
+        // Replace variables in the HTML template
+        pump_power_string += "{{pump_power" + String(j) +"}}";
+        activation_time_string += "{{activation_time" + String(j) +"}}";
+        temp_settings.replace(pump_power_string, String(application_information.GetPumpPower(j)));
+        temp_settings.replace(activation_time_string, String(application_information.GetActivationTime(j)));
+
+        String additionalEntries = "";
+        uint8_t entryCount = 0;
+
+        uint8_t active_time_stored = application_information.GetStoredActiveTimes(j);
+        if(active_time_stored > 0)
         {
-            CTime temp_variable;
+            for (int i = 0; i < active_time_stored; i++)
+            {
+                CTime temp_variable;
 
-            temp_variable.UpdateEpoch(application_information.GetActiveTime(i));
+                temp_variable.UpdateEpoch(application_information.GetActiveTime(j, i));
 
+                additionalEntries += "<div class=\"entry-group\">";
+                additionalEntries += "<input type=\"text\" id=\"entry" + String(entryCount) + "\" name=\"entry" + String(entryCount) + "\" value=\"" + String(temp_variable.getTimeString()) + "\" placeholder=\"HH:MM:SS\">";
+                additionalEntries += "<button type=\"button\" class=\"remove-btn\" onclick=\"removeEntry(this)\">Remove</button>";
+                additionalEntries += "</div>";
+                entryCount++;
+            }
+        }
+        else
+        {
             additionalEntries += "<div class=\"entry-group\">";
-            additionalEntries += "<input type=\"text\" id=\"entry" + String(entryCount) + "\" name=\"entry" + String(entryCount) + "\" value=\"" + String(temp_variable.getTimeString()) + "\" placeholder=\"HH:MM:SS\">";
+            additionalEntries += "<input type=\"text\" id=\"entry" + String(entryCount) + "\" name=\"entry" + String(entryCount) + "\" value=\"00:00:00\" placeholder=\"HH:MM:SS\">";
             additionalEntries += "<button type=\"button\" class=\"remove-btn\" onclick=\"removeEntry(this)\">Remove</button>";
             additionalEntries += "</div>";
             entryCount++;
         }
-    }
-    else
-    {
-        additionalEntries += "<div class=\"entry-group\">";
-        additionalEntries += "<input type=\"text\" id=\"entry" + String(entryCount) + "\" name=\"entry" + String(entryCount) + "\" value=\"00:00:00\" placeholder=\"HH:MM:SS\">";
-        additionalEntries += "<button type=\"button\" class=\"remove-btn\" onclick=\"removeEntry(this)\">Remove</button>";
-        additionalEntries += "</div>";
-        entryCount++;
-    }
 
-    temp_settings.replace("{{additionalEntries}}", additionalEntries);
-    temp_settings.replace("{{entryCount}}", String(entryCount));
+        additional_entries_string += "{{additionalEntries" + String(j) + "}}";
+        entries_string += "{{entryCount" + String(j) + "}}";
+
+        temp_settings.replace(additional_entries_string, additionalEntries);
+        temp_settings.replace(entries_string, String(entryCount));
+    }
 
     // Send the HTML page as the response
     server.send(200, "text/html", temp_settings);
@@ -91,25 +99,30 @@ void handleSettings()
 void handlePumpSettings()
 {
     // Check for POST parameters and update variables
-    if (server.hasArg("activation_time"))
+    for(uint8_t i = 0; i < PUMP_MAX_NUMBER; i++)
     {
-        int temp_act_time = 0;
-        temp_act_time = server.arg("activation_time").toInt();
-        if (temp_act_time >= 0)
+        const String activation_time_string = "activation_time" + String(i+1);
+        const String pump_power_string = "pump_power" + String(i+1);
+        if (server.hasArg(activation_time_string))
         {
-            SendSerialMessage("Activation time updated: %d --> %d\n", application_information.GetActivationTime(), temp_act_time);
-            application_information.SetActivationTime(temp_act_time);
+            int temp_act_time = 0;
+            temp_act_time = server.arg(activation_time_string).toInt();
+            if (temp_act_time >= 0)
+            {
+                SendSerialMessage("Activation time updated: %d --> %d\n", application_information.GetActivationTime(i), temp_act_time);
+                application_information.SetActivationTime(i, temp_act_time);
+            }
         }
-    }
-    
-    if (server.hasArg("pump_power"))
-    {
-        int temp_pump_power = 0;
-        temp_pump_power = server.arg("pump_power").toInt();
-        if (temp_pump_power <=100 && temp_pump_power >=0)
+        
+        if (server.hasArg(pump_power_string))
         {
-            SendSerialMessage("Pump power updated: %d --> %d\n", application_information.GetPumpPower(), temp_pump_power);
-            application_information.SetPumpPower(temp_pump_power);
+            int temp_pump_power = 0;
+            temp_pump_power = server.arg(pump_power_string).toInt();
+            if (temp_pump_power <=100 && temp_pump_power >=0)
+            {
+                SendSerialMessage("Pump power updated: %d --> %d\n", application_information.GetPumpPower(i), temp_pump_power);
+                application_information.SetPumpPower(i, temp_pump_power);
+            }
         }
     }
 
@@ -120,17 +133,27 @@ void handlePumpSettings()
 
 void handleIrrigationStartTimes()
 {
-    application_information.ResetStoredActiveTimes();
-    for (int i = 0; i < 10; i++)
+    int8_t pump = -1;
+    if (server.hasArg("pump_id"))
     {
-        String varName = "entry" + String(i);
-        if (server.hasArg(varName))
-        {
-            CTime temp_variable;
+        pump = server.arg("pump_id").toInt();
+    }
 
-            temp_variable.UpdateEpoch(server.arg(varName).c_str());
-            application_information.SetActiveTime(temp_variable.GetEpoch());
-            SendSerialMessage("New time added: %s\n", temp_variable.getTimeString());
+    if(pump > 0)
+    {
+        pump--;
+        application_information.ResetStoredActiveTimes(pump);
+        for (int i = 0; i < 10; i++)
+        {
+            String varName = "entry" + String(i);
+            if (server.hasArg(varName))
+            {
+                CTime temp_variable;
+
+                temp_variable.UpdateEpoch(server.arg(varName).c_str());
+                application_information.SetActiveTime(pump, temp_variable.GetEpoch());
+                SendSerialMessage("New time added for pump %d: %s\n", pump, temp_variable.getTimeString());
+            }
         }
     }
 

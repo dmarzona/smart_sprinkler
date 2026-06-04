@@ -83,21 +83,13 @@ const char* home = R"(
             <div class="quantity">{{temperature}}°C</div>
         </div>
         <div class="box">
-            <div class="title">Pressure</div>
-            <div class="quantity">{{pressure}}Pa</div>
+            <div class="title">Humidity</div>
+            <div class="quantity">{{pressure}}%</div>
         </div>
         <div class="box">
             <div class="title">Current sensor</div>
             <div class="quantity">{{current_sense}}V</div>
         </div>
-    </div>
-    <div class="large-box">
-        <div class="title">Last log lines</div>
-        <div class="string">{{log_line_1}}</div>
-        <div class="string">{{log_line_2}}</div>
-        <div class="string">{{log_line_3}}</div>
-        <div class="string">{{log_line_4}}</div>
-        <div class="string">{{log_line_5}}</div>
     </div>
     <form action="/" method="POST">
         <button type="submit">Activate pump</button>
@@ -195,69 +187,219 @@ const char* settings = R"delim(
         <!-- Pump Settings Column -->
         <div class="column">
             <h2>Pump Settings</h2>
+
             <form action="/pump_settings" method="POST">
-                <label for="activation_time">Pump activation time [s]:</label>
-                <input type="text" id="activation_time" name="activation_time" value="{{activation_time}}"><br>
-                <label for="pump_power">Pump power [%]:</label>
-                <input type="text" id="pump_power" name="pump_power" value="{{pump_power}}"><br>
-                <button type="submit">Update Pump Settings</button>
+
+                <table width="100%">
+                    <tr>
+                        <!-- LEFT SIDE -->
+                        <td width="50%" valign="top">
+
+                            <h3>Pump 1</h3>
+
+                            <label for="activation_time1">
+                                Pump 1 activation time [s]:
+                            </label><br>
+
+                            <input type="text"
+                                id="activation_time1"
+                                name="activation_time1"
+                                value="{{activation_time0}}"><br><br>
+
+                            <label for="pump_power1">
+                                Pump 1 power [%]:
+                            </label><br>
+
+                            <input type="text"
+                                id="pump_power1"
+                                name="pump_power1"
+                                value="{{pump_power0}}"><br>
+
+                        </td>
+
+                        <!-- RIGHT SIDE -->
+                        <td width="50%" valign="top">
+
+                            <h3>Pump 2</h3>
+
+                            <label for="activation_time2">
+                                Pump 2 activation time [s]:
+                            </label><br>
+
+                            <input type="text"
+                                id="activation_time2"
+                                name="activation_time2"
+                                value="{{activation_time1}}"><br><br>
+
+                            <label for="pump_power2">
+                                Pump 2 power [%]:
+                            </label><br>
+
+                            <input type="text"
+                                id="pump_power2"
+                                name="pump_power2"
+                                value="{{pump_power1}}"><br>
+
+                        </td>
+                    </tr>
+
+                    <!-- BUTTON CENTERED -->
+                    <tr>
+                        <td colspan="2" align="center">
+                            <br>
+                            <button type="submit">
+                                Update Pump Settings
+                            </button>
+                        </td>
+                    </tr>
+
+                </table>
+
             </form>
         </div>
 
         <!-- Dynamic Entries Column -->
         <div class="column">
-            <h2>Irrigation start times</h2>
-            <form action="/irrigation_start_times" method="POST" id="dynamicForm">
-                <div id="entries">
-                    {{additionalEntries}}
+            <h2>Irrigation start times pump 1</h2>
+
+            <form action="/irrigation_start_times"
+                method="POST"
+                id="dynamicForm1">
+
+                <input type="hidden" name="pump_id" value="1">
+
+                <div id="entries1">
+                    {{additionalEntries0}}
                 </div>
-                <button type="button" onclick="addEntry()">Add Entry</button>
-                <button type="submit" onclick="return validateForm()">Submit All Entries</button>
+
+                <button type="button" onclick="addEntry('entries1')">
+                    Add Entry
+                </button>
+
+                <button type="submit"
+                        onclick="return validateForm('entries1')">
+                    Submit All Entries
+                </button>
+
+            </form>
+        </div>
+
+
+        <!-- SECOND DIV BELOW THE FIRST -->
+        <div class="column">
+            <h2>Irrigation start times pump 2</h2>
+
+            <form action="/irrigation_start_times"
+                method="POST"
+                id="dynamicForm2">
+
+                <input type="hidden" name="pump_id" value="2">
+
+                <div id="entries2">
+                    {{additionalEntries1}}
+                </div>
+
+                <button type="button" onclick="addEntry('entries2')">
+                    Add Entry
+                </button>
+
+                <button type="submit"
+                        onclick="return validateForm('entries2')">
+                    Submit All Entries
+                </button>
+
             </form>
         </div>
     </div>
     <!-- Centered Home Link -->
     <a href="/" class="home-link">Home</a>
     <script>
-        let entryCount = {{entryCount}};
+        let entryCount1 = {{entryCount0}};
+        let entryCount2 = {{entryCount1}};
 
-        // Function to add a new entry
-        function addEntry() {
-            if (entryCount < 10) {
-                entryCount++;
-                const entryDiv = document.getElementById('entries');
+        // Add entry to selected container
+        function addEntry(entriesId) {
+            let currentCount;
+            if (entriesId === 'entries1') {
+                currentCount = entryCount1;
+            } else {
+                currentCount = entryCount2;
+            }
+
+            if (currentCount < 10) {
+                currentCount++;
+                if (entriesId === 'entries1') {
+                    entryCount1 = currentCount;
+                } else {
+                    entryCount2 = currentCount;
+                }
+
+                const entryDiv = document.getElementById(entriesId);
                 const newEntry = document.createElement('div');
+
                 newEntry.className = 'entry-group';
                 newEntry.innerHTML = `
-                    <input type="text" id="entry${entryCount}" name="entry${entryCount}" value="00:00:00" placeholder="HH:MM:SS">
-                    <button type="button" class="remove-btn" onclick="removeEntry(this)">Remove</button>
+                    <input type="text"
+                        id="entry${currentCount}"
+                        name="entry${currentCount}"
+                        value="00:00:00"
+                        placeholder="HH:MM:SS">
+
+                    <button type="button"
+                            class="remove-btn"
+                            onclick="removeEntry(this, '${entriesId}')">
+                        Remove
+                    </button>
                 `;
+
                 entryDiv.appendChild(newEntry);
             } else {
                 alert('Maximum of 10 entries reached');
             }
         }
 
-        // Function to remove a specific entry
-        function removeEntry(button) {
+        // Remove entry
+        function removeEntry(button, entriesId) {
+
             const entryGroup = button.parentElement;
+
             entryGroup.remove();
-            entryCount--;
+
+            if (entriesId === 'entries1') {
+                entryCount1--;
+            } else {
+                entryCount2--;
+            }
         }
 
-        // Function to validate the time format HH:MM:SS
-        function validateForm() {
-            const entries = document.querySelectorAll('#entries input[type="text"]');
-            const timePattern = /^([0-1]\d|2[0-3]):([0-5]\d):([0-5]\d)$/; // Regex for HH:MM:SS
+        // Validate selected form
+        function validateForm(entriesId) {
+
+            const entries =
+                document.querySelectorAll(
+                    '#' + entriesId + ' input[type="text"]'
+                );
+
+            const timePattern =
+                /^([0-1]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
 
             for (let i = 0; i < entries.length; i++) {
+
                 if (!timePattern.test(entries[i].value)) {
-                    alert('Invalid time format in entry ' + (i + 1) + ', is '+ entries[i].value +   '. Please use HH:MM:SS.');
-                    return false; // Prevent form submission
+
+                    alert(
+                        'Invalid time format in entry '
+                        + (i + 1)
+                        + ', is '
+                        + entries[i].value
+                        + '. Please use HH:MM:SS.'
+                    );
+
+                    return false;
                 }
             }
 
-            return true; // Allow form submission if all entries are valid
+            return true;
         }
     </script>
 </body>
