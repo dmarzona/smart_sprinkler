@@ -24,8 +24,6 @@ CTime application_time;
 CTime pump_activation_time;
 CPump pump(PWM1, EN1, CS1, PWM2, EN2, CS2);
 
-bool pump_override = false;
-
 bool setHumiditySensor()
 {
     Wire.begin(SDA_PIN, SCL_PIN);
@@ -34,8 +32,6 @@ bool setHumiditySensor()
 
 void mainApplication(void* parameter)
 {
-    static int pump_start = false;
-
     if (!setHumiditySensor())
     {
         SendSerialMessage("Sensor not found\n");
@@ -44,6 +40,10 @@ void mainApplication(void* parameter)
     {
         SendSerialMessage("Sensor properly set\n");
     }
+
+    pump.setPwmDirection1(application_information.GetPumpPowerRaw(0));
+    pump.setPwmDirection2(application_information.GetPumpPowerRaw(1));
+    pump.startWorker();
 
     application_time = current_epoch_time;
 
@@ -69,51 +69,17 @@ void mainApplication(void* parameter)
 
         for (uint8_t j = 0; j < PUMP_MAX_NUMBER; j++)
         {
-        for(uint8_t i = 0; i < application_information.GetStoredActiveTimes(j); i++)
-        {
-            CTime temp_time;
-
-            temp_time.UpdateEpoch(application_information.GetActiveTime(j,i));
-            
-            if( temp_time.GetHours()   == current_epoch_time.GetHours()   &&
-                temp_time.GetMinutes() == current_epoch_time.GetMinutes() &&
-                temp_time.GetSeconds() == current_epoch_time.GetSeconds()
-                ||
-                pump_override)
+            for(uint8_t i = 0; i < application_information.GetStoredActiveTimes(j); i++)
             {
-                pump_start = true;
-                pump_override = false;
-                pump_activation_time = current_epoch_time;
-                if(j==0)
+                CTime temp_time;
+
+                temp_time.UpdateEpoch(application_information.GetActiveTime(j,i));
+                
+                if(temp_time.timeDifference(current_epoch_time) == 0)
                 {
-                    pump.setPwmDirection1(application_information.GetPumpPowerRaw(j));
-                    pump.activatePumpDirection1(true);
+                    pump.sendEvent(j, application_information.GetActivationTime(j));
                 }
-                else
-                {
-                    pump.setPwmDirection2(application_information.GetPumpPowerRaw(j));
-                    pump.activatePumpDirection2(true);
-                }
-                SendSerialMessage("Pump active\n");
-                break;
             }
-        }
-        }
-
-        for (uint8_t j = 0; j < PUMP_MAX_NUMBER; j++)
-        {
-        if (((current_epoch_time - pump_activation_time) >= application_information.GetActivationTime(j)) && pump_start)
-        {
-            pump_start = false;
-            pump.activatePumpDirection1(false);
-            SendSerialMessage("Pump turn-off\n");
-        }
-        }
-
-        if(pump_start)
-        {
-            variables.UpdateCurrentSense(pump.getCurrent());
-            SendSerialMessage("Voltage at current sensor interface: %.2f V\n", variables.GetCurrentSense());
         }
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);

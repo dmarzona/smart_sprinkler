@@ -7,7 +7,7 @@ WebServer server(80);
 WebsiteVariables variables;
 extern CFlash application_information;
 
-extern bool pump_override;
+extern CPump pump;
 
 void webSiteTask(void* parameter)
 {
@@ -122,6 +122,11 @@ void handlePumpSettings()
             {
                 SendSerialMessage("Pump power updated: %d --> %d\n", application_information.GetPumpPower(i), temp_pump_power);
                 application_information.SetPumpPower(i, temp_pump_power);
+                switch(i)
+                {
+                    case 0: pump.setPwmDirection1(application_information.GetPumpPowerRaw(0)); break;
+                    case 1: pump.setPwmDirection2(application_information.GetPumpPowerRaw(1)); break;
+                }
             }
         }
     }
@@ -163,7 +168,7 @@ void handleIrrigationStartTimes()
 
 void handleActivatePump()
 {
-    pump_override = true;
+    pump.sendEvent(0, application_information.GetActivationTime(0));
 
     SendSerialMessage("Pump override triggered\n");
 
