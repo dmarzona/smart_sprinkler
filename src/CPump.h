@@ -25,13 +25,29 @@ class CPump
 {
     public:
         CPump(int output_pin1, int enable_pin1, int cs_pin1, int output_pin2, int enable_pin2, int cs_pin2);
-        void activatePumpDirection1(bool activate);
-        void activatePumpDirection2(bool activate);
+        
         void setPwmDirection1(int pwm);
         void setPwmDirection2(int pwm);
         float getCurrent(void);
-    
+        void startWorker(void);
+        void sendEvent(uint8_t pump, uint32_t active_time);
+        
     private:
+        class PumpEvents
+        {
+            public:
+                PumpEvents(uint8_t in_pump_num, uint32_t in_pump_active_time)
+                {
+                    pump_num = in_pump_num;
+                    pump_active_time = in_pump_active_time;
+                };
+                uint8_t  pump_num;
+                uint32_t pump_active_time;
+        };
+        void activatePumpDirection1(bool activate);
+        void activatePumpDirection2(bool activate);
+        static void worker(void* parameter);
+        QueueHandle_t events; 
         CHalfBridge h_bridge1;
         CHalfBridge h_bridge2;
 };
