@@ -41,6 +41,7 @@ class CTime
         char* getTimeString();
         char* getDateStringForFilename();
         int operator-(const CTime& other) const;
+        int timeDifference(CTime other);
     
     private:
         void CalculateSeconds();
