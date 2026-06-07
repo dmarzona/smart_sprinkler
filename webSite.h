@@ -92,7 +92,13 @@ const char* home = R"(
         </div>
     </div>
     <form action="/" method="POST">
-        <button type="submit">Activate pump</button>
+        <button type="submit" name="pump" value="0">
+            Activate pump 1
+        </button>
+
+        <button type="submit" name="pump" value="1">
+            Activate pump 2
+        </button>
     </form>
     <a class="link" href="/settings">Settings</a>
 </body>

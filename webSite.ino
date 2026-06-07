@@ -168,9 +168,13 @@ void handleIrrigationStartTimes()
 
 void handleActivatePump()
 {
-    pump.sendEvent(0, application_information.GetActivationTime(0));
-
-    SendSerialMessage("Pump override triggered\n");
+    int8_t pump_id = -1;
+    if (server.hasArg("pump"))
+    {
+        pump_id = server.arg("pump").toInt();
+        pump.sendEvent(pump_id, application_information.GetActivationTime(0));
+        SendSerialMessage("Pump %d override triggered\n", pump_id);
+    }
 
     // Redirect back to the root page
     server.sendHeader("Location", "/");
