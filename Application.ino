@@ -77,7 +77,7 @@ void mainApplication(void* parameter)
                 
                 if(temp_time.timeDifference(current_epoch_time) == 0)
                 {
-                    pump.sendEvent(j, application_information.GetActivationTime(j));
+                    pump.sendEvent((CPump::PumpEntries)j, application_information.GetActivationTime(j));
                 }
             }
         }

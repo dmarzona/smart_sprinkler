@@ -172,7 +172,7 @@ void handleActivatePump()
     if (server.hasArg("pump"))
     {
         pump_id = server.arg("pump").toInt();
-        pump.sendEvent(pump_id, application_information.GetActivationTime(0));
+        pump.sendEvent((CPump::PumpEntries)pump_id, application_information.GetActivationTime(0));
         SendSerialMessage("Pump %d override triggered\n", pump_id);
     }
 

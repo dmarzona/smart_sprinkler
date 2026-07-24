@@ -118,7 +118,7 @@ float CPump::getCurrent(void)
     }
 }
 
-void CPump::sendEvent(uint8_t pump, uint32_t active_time)
+void CPump::sendEvent(PumpEntries pump, uint32_t active_time)
 {
     PumpEvents temp_event(pump, active_time);
     xQueueSend(events, (void *)&temp_event, 0);
@@ -139,7 +139,7 @@ void CPump::startWorker(void)
 
 void CPump::worker(void* parameter)
 {
-    PumpEvents received_event(0, 0);
+    PumpEvents received_event(PUMP_0, 0);
     CPump* pump = static_cast<CPump*>(parameter);
     
     while(true)
@@ -149,14 +149,14 @@ void CPump::worker(void* parameter)
             SendSerialMessage("Pump %d activated for %d s\n", received_event.pump_num, received_event.pump_active_time);
             switch(received_event.pump_num)
             {
-                case 0:
+                case PUMP_0:
                 {
                     pump->activatePumpDirection1(true);
                     vTaskDelay(received_event.pump_active_time*1000/portTICK_PERIOD_MS);
                     pump->activatePumpDirection1(false);
                     break;
                 }
-                case 1:
+                case PUMP_1:
                 {
                     pump->activatePumpDirection2(true);
                     vTaskDelay(received_event.pump_active_time*1000/portTICK_PERIOD_MS);
