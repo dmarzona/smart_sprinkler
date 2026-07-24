@@ -1,4 +1,5 @@
 #include <WebServer.h>
+#include <Update.h>
 #include "webSite.h"
 #include "src/WebsiteVariables.h"
 
@@ -16,6 +17,8 @@ void webSiteTask(void* parameter)
     server.on("/settings", handleSettings);
     server.on("/pump_settings", HTTP_POST, handlePumpSettings);
     server.on("/irrigation_start_times", HTTP_POST, handleIrrigationStartTimes);
+    server.on("/updatePage", HTTP_GET, handleUpdatePage);
+    server.on("/update", HTTP_POST, handleUpdateComplete, handleUpdateUpload);
     server.onNotFound(handleNotFound);
 
     // Start the server
@@ -184,4 +187,46 @@ void handleActivatePump()
 void handleNotFound()
 {
     server.send(404, "text/plain", "404: Not found");
+}
+
+void handleUpdatePage()
+{
+    server.send(200, "text/html", updatePage);
+}
+
+void handleUpdateComplete() {
+    server.sendHeader("Connection", "close");
+    server.send(200, "text/plain", Update.hasError() ? "FAIL" : "OK");
+    ESP.restart();
+}
+
+void handleUpdateUpload() {
+    HTTPUpload& upload = server.upload();
+
+    switch (upload.status) {
+        case UPLOAD_FILE_START:
+            Serial.printf("Update: %s\n", upload.filename.c_str());
+
+            if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+                Update.printError(Serial);
+            }
+            break;
+
+        case UPLOAD_FILE_WRITE:
+            if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+                Update.printError(Serial);
+            }
+            break;
+
+        case UPLOAD_FILE_END:
+            if (Update.end(true)) {
+                Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+            } else {
+                Update.printError(Serial);
+            }
+            break;
+
+        default:
+            break;
+    }
 }
