@@ -48,7 +48,7 @@ bool CHalfBridge::isOn(void)
 
 float CHalfBridge::getCurrent(void)
 {
-    return (float)analogRead(current_sensor_pin)/1.0f; // ToDo: set proper scale value
+    return ((float)analogRead(current_sensor_pin)*3.3/4096.0)*10.023;
 }
 
 //CPump
