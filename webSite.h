@@ -53,11 +53,14 @@ const char* home = R"(
             margin: 5px 0;
         }
         .link {
-            font-size: 16px;
-            color: #0066cc;
+            display: block;
+            margin-top: 20px;
+            font-size: 18px;
             text-decoration: none;
+            color: #007bff;
         }
         .link:hover {
+            color: #0056b3;
             text-decoration: underline;
         }
         button {
@@ -124,14 +127,14 @@ const char* settings = R"delim(
             color: #333;
             margin-bottom: 20px;
         }
-        .home-link {
+        .link {
             display: block;
             margin-top: 20px;
             font-size: 18px;
             text-decoration: none;
             color: #007bff;
         }
-        .home-link:hover {
+        .link:hover {
             color: #0056b3;
             text-decoration: underline;
         }
@@ -318,7 +321,9 @@ const char* settings = R"delim(
         </div>
     </div>
     <!-- Centered Home Link -->
-    <a href="/" class="home-link">Home</a>
+    <a href="/" class="link">Home</a>
+    <!-- Centered Update Link -->
+    <a href="/updatePage" class="link">Firmware Update</a>
     <script>
         let entryCount1 = {{entryCount0}};
         let entryCount2 = {{entryCount1}};
@@ -408,6 +413,206 @@ const char* settings = R"delim(
             return true;
         }
     </script>
+</body>
+</html>
+)delim";
+
+const char* updatePage = R"delim(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firmware Update</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .column {
+            width: 500px;
+            padding: 20px;
+            background-color: #fff;
+            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 25px;
+            background-color: #28a745;
+            text-align: center;
+            line-height: 25px;
+            color: white;
+            transition: width 0.2s;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .home-link {
+            display: block;
+            margin-top: 20px;
+            font-size: 18px;
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .home-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Firmware Update</h1>
+
+<div class="container">
+    <div class="column">
+
+        <h2>Select Firmware File</h2>
+
+        <form method="POST"
+              action="#"
+              enctype="multipart/form-data"
+              id="upload_form">
+
+            <input type="file"
+                   name="update"
+                   accept=".bin"
+                   required>
+
+            <br>
+
+            <button type="submit">
+                Upload Firmware
+            </button>
+
+        </form>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar">
+                0%
+            </div>
+        </div>
+
+        <div id="status">
+            Waiting for upload...
+        </div>
+
+    </div>
+</div>
+
+<a href="/" class="home-link">Home</a>
+<a href="/settings" class="home-link">Settings</a>
+
+<script>
+
+$("#upload_form").submit(function(e){
+
+    e.preventDefault();
+
+    var form = $("#upload_form")[0];
+    var data = new FormData(form);
+
+    $.ajax({
+
+        url: "/update",
+        type: "POST",
+        data: data,
+        contentType: false,
+        processData: false,
+
+        xhr: function() {
+
+            var xhr = new window.XMLHttpRequest();
+
+            xhr.upload.addEventListener("progress", function(evt){
+
+                if(evt.lengthComputable){
+
+                    var percent = Math.round((evt.loaded / evt.total) * 100);
+
+                    $("#progressBar")
+                        .css("width", percent + "%")
+                        .text(percent + "%");
+
+                    $("#status").text("Uploading...");
+
+                }
+
+            }, false);
+
+            return xhr;
+        },
+
+        success: function(){
+
+            $("#status").text("Update complete. Device is rebooting...");
+
+        },
+
+        error: function(){
+
+            $("#status").text("Upload failed.");
+
+        }
+
+    });
+
+});
+
+</script>
+
 </body>
 </html>
 )delim";
