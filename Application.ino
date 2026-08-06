@@ -82,6 +82,8 @@ void mainApplication(void* parameter)
             }
         }
 
+        variables.UpdateCurrentSense(pump.getCurrent());
+
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }

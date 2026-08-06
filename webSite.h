@@ -91,7 +91,7 @@ const char* home = R"(
         </div>
         <div class="box">
             <div class="title">Current sensor</div>
-            <div class="quantity">{{current_sense}}V</div>
+            <div class="quantity">{{current_sense}}A</div>
         </div>
     </div>
     <form action="/" method="POST">
