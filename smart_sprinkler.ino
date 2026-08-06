@@ -1,9 +1,6 @@
 #include <WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
 #include "freertos/FreeRTOS.h"
 #include "src/CFlash.h"
 
@@ -13,7 +10,6 @@ const int   daylightOffset_sec = 3600;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
-const int pumpPin = 16;
 const int buttonPin = 1;
 const int currentSensorPin = 5;
 
@@ -27,7 +23,7 @@ void checkWifiStatus(void* parameter)
   {
     if (WiFi.status() != WL_CONNECTED)
     {
-      log("WiFi lost, reconnecting...");
+      SendSerialMessage("WiFi lost, reconnecting...\n");
       WiFi.disconnect();
       WiFi.reconnect();
     }
@@ -37,7 +33,6 @@ void checkWifiStatus(void* parameter)
 
 void setup()
 {
-  pinMode(pumpPin, OUTPUT);
   pinMode(buttonPin, INPUT_PULLDOWN);
 
   wait_for_connection_semaphore = xSemaphoreCreateBinary();
@@ -73,16 +68,6 @@ void setup()
   while (xSemaphoreTake(wait_for_connection_semaphore, (TickType_t)10) == pdFALSE)
   {
   }
-
-  xTaskCreatePinnedToCore(
-    SDCardManager,
-    "SD Manager",
-    4096,
-    NULL,
-    1,
-    NULL,
-    0
-  );
 
   xTaskCreatePinnedToCore(
     updateTime,

@@ -191,7 +191,14 @@ void CTime::CalculateEpoch()
     epoch += seconds;
 }
 
+// Returns the difference in seconds considering **ALSO** days, months, years
 int CTime::operator-(const CTime& other) const
 {
     return abs(this->epoch - other.epoch);
+}
+
+// Returns the difference in seconds considering **ONLY** seconds, minutes, hours
+int CTime::timeDifference(CTime other)
+{
+    return abs((this->epoch % DAY_IN_SECONDS) - (other.epoch % DAY_IN_SECONDS));
 }

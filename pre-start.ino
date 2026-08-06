@@ -35,12 +35,8 @@ void PreStartApplication(void* parameter)
   // Init communication with the external flash
   application_information.begin();
   
-  // Check if it's the first time that the system has been turned on
-  if(application_information.IsFlashVirgin())
-  {
-    application_information.InitializeFlashInfo();
-    SendSerialMessage("Flash Info init\n");
-  }
+  // Check if flash is virgin or has a different version wrt the one expected for this release
+  application_information.InitializeFlashInfo();
 
   // Check if there's already an SSID stored
   if(application_information.IsSSIDSet())
